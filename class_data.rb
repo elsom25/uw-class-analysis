@@ -5,6 +5,7 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require :default
 
+require 'net/http'
 require 'csv'
 
 # From a given term, using the api's from api.uwaterloo.ca, creates a csv of
@@ -28,11 +29,12 @@ class ClassData
 
   attr_reader :class_data_table
 
-  def initialize(term)
+  def initialize(term, api_key)
     raise 'term must be an String.' unless term.is_a? String
+    @api_key = api_key
 
     build_table
-    import_voter_lists(term)
+    import_term_data(term)
   end
 
   def create_csv(file_name='__class_data.csv')
@@ -48,27 +50,40 @@ class ClassData
 
 protected
 
+  def api(api_code)
+    uri = URI("https://api.uwaterloo.ca/v2/#{api_code}.json?key=#{@api_key}")
+    http_response = Net::HTTP.get(uri)
+
+    json_hash = Oj.load(http_response)
+    response = RecursiveOpenStruct.new(json_hash, recurse_over_arrays: true )
+
+    raise "#{response.meta.status}: #{response.meta.message}" if response[:data].size.zero?
+    response.data
+  end
+
   def build_table
     @@DB = Sequel.sqlite
     @@DB.create_table :class_data do
       primary_key :id
-      Integer :student_id, unique: true
-      String  :user_id, unique: true
+      String :subject_code
+      String :title
 
-      String  :first_name
-      String  :middle_name
-      String  :last_name
-      String  :email
+      String :section
+      String :campus
+      String :enrollment_capacity
+      String :enrollment_total
+      String :location_building
+      String :location_room
 
-      String  :program
-      String  :academic_plan
-      String  :term
-      String  :campus
-
-      String  :ip
-      String  :vote_time
+      String :start_time
+      String :end_time
+      String :weekdays
     end
     @class_data_table = @@DB[:class_data]
+  end
+
+  def import_term_data(term)
+    subject_list = api('codes/subjects').map(&:subject)
   end
 
   def import_voter_lists(voter_list_files)

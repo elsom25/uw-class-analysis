@@ -33,6 +33,11 @@ class Parser
         options.term = term
       end
 
+      opts.on('-a', '--api API_KEY', String,
+              'Optional. Specify your API key.') do |key|
+        options.api_key = key
+      end
+
       opts.separator ''
       opts.separator 'Common options:'
 
@@ -55,6 +60,7 @@ class Parser
 end
 
 options = Parser.parse(ARGV)
+options.api_key ||= File.open('.uw-api-key', 'rb'){ |file| file.read.tr("\n", '') }
 
-class_data = ClassData.new(options.term)
-class_data.create_csv
+class_data = ClassData.new(options.term, options.api_key)
+# class_data.create_csv
