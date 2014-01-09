@@ -20,3 +20,6 @@ doc/
 # project artifacts
 __election_data.csv
 *.tmp
+
+# CONFIG
+.uw-api-key
