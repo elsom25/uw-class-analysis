@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+
+# =============================================================================
+# Load dependencies
+# -----------------------------------------------------------------------------
+
+# @see: http://stackoverflow.com/a/5998961/192196
+$LOAD_PATH.unshift File.dirname(__FILE__)
+require 'optparse'
+require 'ostruct'
+require 'pp'
+
+require 'class_data'
+
+# =============================================================================
+# Application
+# -----------------------------------------------------------------------------
+
+class Parser
+  def self.parse(args)
+    options = OpenStruct.new
+
+    opt_parser = OptionParser.new do |opts|
+      opts.banner = "From a given term, using the api's from api.uwaterloo.ca, creates a csv of\nall classes offered, the room, the professor, and the class size.\n\nUsage: #{opts.program_name} [options]"
+      "Parses election data given student voter lists and election meta-data to better understand\nvoter behaviour.\n\nUsage: #{opts.program_name} [options]"
+
+      opts.separator ''
+      opts.separator 'Required options:'
+
+      # Mandatory argument.
+      opts.on('-t', '--term 1141', String,
+              'Required. The term to analyze class data for.') do |term|
+        options.term = term
+      end
+
+      opts.separator ''
+      opts.separator 'Common options:'
+
+      opts.on_tail('-h', '--help', 'Show this message') do
+        puts opts
+        exit
+      end
+
+      opts.on_tail('--version', 'Show version') do
+        puts OptionParser::Version.join('.')
+        exit
+      end
+    end
+    opt_parser.parse!(args)
+
+    raise OptionParser::MissingArgument, "no 'term' option specified  as a parameter" if options.term.nil?
+
+    options
+  end
+end
+
+options = Parser.parse(ARGV)
+
+class_data = ClassData.new(options.term)
+class_data.create_csv
