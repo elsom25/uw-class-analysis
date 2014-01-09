@@ -17,9 +17,9 @@ tmp
 _yardoc
 doc/
 
-# project artifacts
-__election_data.csv
+# Project
+*.csv
 *.tmp
-
-# CONFIG
 .uw-api-key
+
+

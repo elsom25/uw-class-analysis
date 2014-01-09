@@ -57,7 +57,7 @@ protected
     json_hash = Oj.load(http_response)
     response = RecursiveOpenStruct.new(json_hash, recurse_over_arrays: true )
 
-    raise "#{response.meta.status}: #{response.meta.message}" if response[:data].size.zero?
+    raise "#{response.meta.status}: #{response.meta.message}" if [401].include? response.meta.status
     response.data
   end
 
@@ -70,10 +70,10 @@ protected
 
       String :section
       String :campus
-      String :enrollment_capacity
-      String :enrollment_total
-      String :location_building
-      String :location_room
+      String :capacity
+      String :enrollment
+      String :location
+      String :profs
 
       String :start_time
       String :end_time
@@ -84,64 +84,34 @@ protected
 
   def import_term_data(term)
     subject_list = api('codes/subjects').map(&:subject)
-  end
 
-  def import_voter_lists(voter_list_files)
-    # need to nuke the first line, since it interfears with headers
-    voter_list_files = voter_list_files.map do |input|
-      output = "#{input}.tmp"
-      system("tail -n +2 #{input} > #{output}") #kinda hacky
-      output
-    end
+    subject_list.each do |subject|
+      api("terms/#{term}/#{subject}/schedule").each do |course|
+        course.classes.each do |lecture|
+          next if lecture.dates.start_time.nil?
 
-    voter_list_files.each do |f|
-      CSV.foreach(f, headers: :first_row) do |row|
-        @class_data_table.insert(
-             student_id: row['Student ID'],
-                user_id: row['User'],
-             first_name: row['First Name'],
-            middle_name: row['Middle'],
-              last_name: row['Last'],
-                  email: row['Email ID'],
-                program: row['Program'],
-          academic_plan: row['Acad Plan'],
-                   term: row['Proj Level'],
-                 campus: row['Campus']
-        ) rescue next
+          next if course.campus.include? 'ABROAD'
+          next if course.section.include? 'TUT'
+
+          @class_data_table.insert(
+                 subject_code: course.subject,
+                        title: course.title,
+
+                      section: course.section,
+                       campus: course.campus,
+                     capacity: course.enrollment_capacity,
+                   enrollment: course.enrollment_total,
+
+                     location: "#{lecture.location.building} #{lecture.location.room}",
+                        profs: lecture.instructors.join('; '),
+
+                   start_time: lecture.dates.start_time,
+                     end_time: lecture.dates.end_time,
+                     weekdays: lecture.dates.weekdays
+          )
+        end
       end
     end
-    FileUtils.rm voter_list_files
-  end
-
-  def import_results_lists(file_results)
-    file_results = file_results.map do |f|
-      raw_string = open(f, &:read)
-      results_arr = raw_string.scan(/ ([a-zA-Z]\w{3,11}  .*?) ((?= [a-zA-Z]\w{3,11}) | $) /mx).map(&:first)
-    end
-
-    file_results.each do |result|
-      result.each do |data|
-        user_id = find_user_id(data)
-        ip = find_ip(data)
-        vote_datetime = find_vote_datetime(data)
-
-        @class_data_table.where('user_id = ?', user_id).update( ip: ip, vote_time: vote_datetime)
-      end
-    end
-  end
-
-  def find_user_id(str)
-    str.match(/ [a-zA-Z]\w{3,11} /mx).to_s
-  end
-
-  def find_ip(str)
-    raw_ip = str.match(/ \[ (.*) \] /mx)
-    raw_ip[1].to_s if raw_ip
-  end
-
-  def find_vote_datetime(str)
-    raw_vote_datetime = str.match(/ at\ (.*) /mx)
-    DateTime.parse( raw_vote_datetime.to_s ) if raw_vote_datetime
   end
 
 end
