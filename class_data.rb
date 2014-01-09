@@ -31,13 +31,14 @@ class ClassData
 
   def initialize(term, api_key)
     raise 'term must be an String.' unless term.is_a? String
+    @term = term
     @api_key = api_key
 
     build_table
-    import_term_data(term)
+    import_term_data(@term)
   end
 
-  def create_csv(file_name='__class_data.csv')
+  def create_csv(file_name="__class_data_#{@term}.csv")
     CSV.open( file_name, 'w',
               write_headers: true,
               headers: @class_data_table.columns.map(&:to_s)
