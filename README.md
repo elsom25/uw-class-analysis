@@ -1,7 +1,7 @@
 UW Class Analysis
 =================
 
-From a given term, using the api's from [api.uwaterloo.ca](api.uwaterloo.ca), creates a csv of all classes offered, the room, the professor, and the class size.
+From a given term, using the api's from [api.uwaterloo.ca](api.uwaterloo.ca), creates a csv of all classes offered, the room, the professor, and the class size. Only outputs lectures and ignores anything classified as 'ABROAD'.
 
 General usage
 -------------
