@@ -21,6 +21,9 @@ As displayed from `-h`:
         -h, --help                       Show this message
             --version                    Show version
 
+
+If you don't want to type your UW API Key each time you use the program, feel free to add `.uw-api-key` into the directory, and paste your key in there.
+
 Structure
 ---------
 
