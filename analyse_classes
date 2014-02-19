@@ -53,14 +53,14 @@ class Parser
     end
     opt_parser.parse!(args)
 
-    raise OptionParser::MissingArgument, "no 'term' option specified  as a parameter" if options.term.nil?
+    raise OptionParser::MissingArgument, "no 'term' option specified as a parameter" if options.term.nil?
 
     options
   end
 end
 
 options = Parser.parse(ARGV)
-options.api_key ||= File.open('.uw-api-key', 'rb'){ |file| file.read.tr("\n", '') }
+options.api_key ||= File.open('.uw-api-key', 'rb'){ |file| file.read.tr("\n", '') } rescue raise OptionParser::MissingArgument, "no 'api' option specified"
 
 class_data = ClassData.new(options.term, options.api_key)
 class_data.create_csv
