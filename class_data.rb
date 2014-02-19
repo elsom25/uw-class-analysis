@@ -92,7 +92,7 @@ protected
           next if lecture.dates.start_time.nil?
 
           next if course.campus.include? 'ABROAD'
-          next if course.section.include? 'TUT'
+          next unless course.section.include? 'LEC'
 
           @class_data_table.insert(
                  subject_code: course.subject,
